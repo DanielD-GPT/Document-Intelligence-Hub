@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Transcription & Chat App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <h1>Azure Open AI Whisper Demo</h1>
+    </header>
+
+    <div class="app-container">
+        <div class="left-section">
+            <!-- Audio File Upload Window -->
+            <div class="window upload-window">
+                <div class="window-header">
+                    <h2>Audio File Upload</h2>
+                </div>
+                <div class="window-content">
+                    <div class="upload-container">
+                        <!-- Left Side: Drag & Drop Section -->
+                        <div class="upload-left">
+                            <div class="drop-zone" id="dropZone">
+                                <div class="drop-zone-content">
+                                    <i class="upload-icon">📁</i>
+                                    <p>Drag & drop your audio files here</p>
+                                    <p>or</p>
+                                    <button class="browse-btn" onclick="document.getElementById('fileInput').click()">
+                                        Browse Files
+                                    </button>
+                                    <input type="file" id="fileInput" accept=".wav,.mp3,audio/wav,audio/mpeg" style="display: none;">
+                                </div>
+                            </div>
+                            <div class="upload-progress" id="uploadProgress" style="display: none;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <span id="progressText">Uploading...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side: Uploaded Files Section -->
+                        <div class="upload-right">
+                            <div class="file-search-container">
+                                <input 
+                                    type="text" 
+                                    id="fileSearchInput" 
+                                    class="file-search-input" 
+                                    placeholder="Search files and transcriptions..."
+                                    onkeyup="filterFiles()"
+                                >
+                                <span class="search-icon">🔍</span>
+                                <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearch()" style="display: none;" title="Clear search">✕</button>
+                            </div>
+                            <div class="uploaded-files" id="uploadedFiles">
+                                <h3>Uploaded Files:</h3>
+                                <div class="file-list" id="fileList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transcription Output Window -->
+            <div class="window transcription-window">
+                <div class="window-header">
+                    <h2>Transcription Output</h2>
+                    <div class="transcription-controls">
+                        <button class="copy-btn" id="copyBtn" onclick="copyTranscription()">📋 Copy</button>
+                        <button class="download-btn" id="downloadBtn" onclick="downloadTranscription()">💾 Download</button>
+                    </div>
+                </div>
+                <div class="window-content">
+                    <div class="transcription-container">
+                        <div class="transcription-placeholder" id="transcriptionPlaceholder">
+                            <p>Upload an audio file to see the transcription here</p>
+                        </div>
+                        <textarea 
+                            class="transcription-text" 
+                            id="transcriptionText" 
+                            placeholder="Transcription will appear here..."
+                            readonly
+                            style="display: none;"
+                        ></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section: Chat Interface -->
+        <div class="right-section">
+            <div class="window chat-window">
+                <div class="window-header">
+                    <h2>Chat with Your Data</h2>
+                    <div class="chat-controls">
+                        <select id="fileSelect" class="file-select">
+                            <option value="">Select a transcribed file...</option>
+                        </select>
+                        <button class="copy-chat-btn" onclick="copyChatHistory()" title="Copy chat to clipboard">📋 Copy</button>
+                        <button class="export-chat-btn" onclick="exportChatHistory()" title="Export chat as text file">💾 Export</button>
+                        <button class="clear-chat-btn" onclick="clearChat()">🗑️ Clear</button>
+                    </div>
+                </div>
+                <div class="window-content">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-placeholder">
+                                <p>Select a transcribed file and start asking questions about the audio content!</p>
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <input 
+                                type="text" 
+                                id="chatInput" 
+                                placeholder="Ask a question about the transcribed audio..."
+                                disabled
+                            >
+                            <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Processing audio file...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
