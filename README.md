@@ -1,18 +1,21 @@
-# Document Processing App with RAG
+# Azure Document Intelligence Hub
 
-A modern web application for processing and analyzing PDF documents using Azure AI Document Intelligence and Azure OpenAI. Features a clean two-pane UI with document viewing, content extraction, and intelligent search capabilities.
+A modern web application for analyzing documents using Azure AI Document Intelligence (Content Understanding) and Azure OpenAI. Features a three-pane UI with document viewing, content extraction, and intelligent Q&A capabilities.
 
 ## Features
 
-📄 **PDF Document Upload**: Upload PDF documents via drag & drop or file browser  
+📄 **PDF Document Upload**: Upload contract documents for analysis  
 🔍 **Content Extraction**: Automatically extract text using Azure AI Document Intelligence (prebuilt-read model)  
-📊 **Two-Pane Interface**:
-- Left Pane: Upload area, file management, and extracted content display
-- Right Pane: PDF document viewer with zoom controls  
+📊 **Three-Pane Interface**:
+- **Left Pane**: Upload area, file management, and extracted content display
+- **Middle Pane**: PDF document viewer with zoom controls
+- **Right Pane**: LLM-powered Q&A interface
 
+🤖 **AI-Powered Q&A**: Ask questions about your documents using Azure OpenAI  
+🎯 **Interactive Navigation**: Click on files to view PDFs and their extracted content  
 🔎 **Smart Search**: Search across filenames and extracted content with highlighting  
 📋 **Content Management**: Copy, download, and manage extracted text  
-🎯 **Interactive Navigation**: Click on files to view PDFs and their extracted content  
+📊 **Excel Export**: Generate structured Excel workbooks from extracted content  
 
 ## Architecture
 
@@ -34,8 +37,8 @@ A modern web application for processing and analyzing PDF documents using Azure 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/DanielD-GPT/Document-Processing-App-with-RAG.git
-cd Document-Processing-App-with-RAG
+git clone https://github.com/DanielD-GPT/Document-Intelligence-Hub.git
+cd Document-Intelligence-Hub
 ```
 
 ### 2. Install Dependencies
@@ -56,17 +59,14 @@ Edit `.env` and add your Azure credentials:
 
 ```env
 # Azure Document Intelligence Configuration  
-AZURE_CONTENT_UNDERSTANDING_ENDPOINT=https://your-resource.cognitiveservices.azure.com/
-AZURE_CONTENT_UNDERSTANDING_KEY=your_key_here
+AZURE_CONTENT_UNDERSTANDING_ENDPOINT=your_azure_document_intelligence_endpoint_here
+AZURE_CONTENT_UNDERSTANDING_KEY=your_azure_document_intelligence_key_here
 
-# Azure OpenAI Configuration (for transcription)
-REACT_APP_AZURE_OPENAI_ENDPOINT=https://your-openai.openai.azure.com/
-REACT_APP_AZURE_OPENAI_KEY=your_openai_key_here
-REACT_APP_AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment_name_here
-
-# Azure OpenAI Configuration (for chat)
-REACT_APP_AZURE_OPENAI_CHAT_ENDPOINT=https://your-openai-chat.openai.azure.com/
-REACT_APP_AZURE_OPENAI_CHAT_KEY=your_openai_chat_key_here
+# Azure OpenAI Configuration (required for chat + Excel workbook filling)
+AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint_here
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_DEPLOYMENT=your_deployment_name_here
+AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
 
 # Server Configuration
 PORT=8080
@@ -90,173 +90,153 @@ PORT=8080
 
 ### 4. Run the Application
 
-Use the VS Code task or run manually:
-
 ```bash
 npm start
 ```
 
-The server will start on http://localhost:8080
+The server will start on `http://localhost:8080`
 
 ### 5. Open in Browser
 
 Navigate to:
-
 ```
 http://localhost:8080
 ```
 
 ## Usage
 
-1. **Upload a PDF**: Drag & drop a PDF file or click "Browse Files" to select one
-2. **View Extracted Content**: The extracted text appears in the Content Analysis Output section
-3. **Search Content**: Use the search bar to find text across filenames and content
-4. **View PDF**: Click on a file to display it in the PDF viewer
-5. **Copy/Download**: Use the toolbar buttons to copy or download extracted text
-6. **Delete Files**: Remove files using the delete button on each file entry
+1. **Upload a Document**: Click the upload area and select a PDF file or drag & drop
+2. **View Extracted Content**: The left pane will show all extracted text
+3. **Search Content**: Use the search bar to find specific content
+4. **View PDF**: The middle pane displays the PDF document with zoom controls
+5. **Ask Questions**: Use the right pane to ask AI-powered questions about your document
+6. **Export to Excel**: Generate structured Excel workbooks from extracted content
 
 ## Project Structure
 
 ```
-Document-Processing-App-with-RAG/
+Document-Intelligence-Hub/
 ├── public/
-│   ├── index.html          # Main HTML file with two-pane layout
+│   ├── index.html          # Main HTML file with three-pane layout
 │   ├── styles.css          # Application styling
-│   ├── script.js           # Frontend JavaScript logic
-│   └── script-clean.js     # Clean version of frontend script
-├── uploads/                # Temporary storage for uploaded PDFs
-│   └── README.md
+│   └── script.js           # Frontend JavaScript logic
+├── uploads/                # Temporary storage for uploaded PDFs (auto-created)
 ├── index.js                # Express server with Azure integration
-├── Content Understanding.js # Azure Content Understanding utilities
 ├── package.json            # Node.js dependencies
 ├── .env.example            # Environment variables template
-├── .gitignore              # Git ignore rules
-└── README.md               # This file
+├── .gitignore             # Git ignore rules
+└── README.md              # This file
 ```
 
 ## API Endpoints
 
 ### POST /upload
+Upload and analyze a document.
 
-Upload and analyze a PDF document.
-
-**Request**: `multipart/form-data` with `pdfFile` field (PDF file)
+**Request**: `multipart/form-data` with `file` field (PDF)
 
 **Response**:
 ```json
 {
-  "success": true,
-  "fileId": "1234567890-document.pdf",
-  "filename": "document.pdf",
+  "message": "File uploaded successfully",
+  "filePath": "/uploads/document.pdf",
   "content": "Extracted text content..."
 }
 ```
 
-### GET /transcription/:fileId
+### POST /chat
+Ask a question about uploaded documents.
 
-Get the analysis result for a specific document.
+**Request**:
+```json
+{
+  "message": "What is the termination clause?",
+  "context": "Document content..."
+}
+```
 
 **Response**:
 ```json
 {
-  "filename": "document.pdf",
-  "content": "Extracted text content...",
-  "uploadTime": "2024-01-15T10:30:00.000Z"
+  "response": "The termination clause states..."
 }
 ```
 
-### GET /transcriptions
-
-Get all document analyses from the current session.
-
-### GET /pdf/:fileId
-
-Retrieve uploaded PDF file for viewing.
-
-### DELETE /files/:fileId
-
-Delete a document and its analysis data.
+### GET /files
+List all uploaded files with their analysis.
 
 **Response**:
 ```json
 {
-  "success": true,
-  "message": "File deleted successfully",
-  "fileId": "1234567890-document.pdf"
+  "files": [
+    {
+      "filename": "contract.pdf",
+      "content": "...",
+      "uploadDate": "2026-01-21T..."
+    }
+  ]
 }
 ```
 
-## Development
+### POST /generate-workbook
+Generate an Excel workbook from extracted content.
 
-To run in development mode with auto-restart:
-
-```bash
-npm run dev
+**Request**:
+```json
+{
+  "filename": "contract.pdf",
+  "extractedContent": "..."
+}
 ```
+
+**Response**: Excel file download
 
 ## Technologies Used
 
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Backend**: Node.js, Express
 - **Azure AI Services**:
-  - Azure AI Document Intelligence - Document analysis SDK
-  - Azure OpenAI - LLM integration
+  - `@azure/ai-form-recognizer` - Document Intelligence SDK
+  - `@azure/openai` - Azure OpenAI integration
 - **Other Libraries**:
-  - multer - File upload handling
-  - axios - HTTP client
-  - cors - Cross-origin resource sharing
-  - dotenv - Environment variable management
-  - form-data - Multipart form data handling
+  - `multer` - File upload handling
+  - `dotenv` - Environment variable management
+  - `exceljs` - Excel workbook generation
+  - `axios` - HTTP client
 
 ## Security Notes
 
-- Never commit `.env` file to version control
-- Keep your Azure keys secure
-- Uploaded files are stored temporarily in the `uploads/` directory
-- Document analysis is stored in memory and cleared on server restart
-- Consider implementing file cleanup and size limits for production use
-
-## Future Enhancements
-
-- [ ] PDF viewer with highlight functionality for selected sections
-- [ ] Support for more document formats (Word, images)
-- [ ] Document comparison features
-- [ ] Export analyzed content
-- [ ] User authentication and document management
-- [ ] Advanced search within documents
-- [ ] Persistent storage for document history
-- [ ] RAG-powered Q&A capabilities
+- ⚠️ Never commit `.env` file to version control
+- 🔐 Keep your Azure keys secure
+- 📁 Uploaded files are stored temporarily in the `uploads/` directory
+- 🛡️ Consider implementing file cleanup and size limits for production use
+- 🔒 Implement proper authentication and authorization for production scenarios
 
 ## Troubleshooting
 
 **Issue: Server won't start**
 - Check that port 8080 is not in use
 - Verify `.env` file exists and has correct values
-- Ensure all dependencies are installed (`npm install`)
+- Ensure dependencies are installed: `npm install`
 
 **Issue: Document analysis fails**
 - Verify Azure Document Intelligence credentials
 - Check that the PDF file is valid and not corrupted
 - Ensure your Azure resource has sufficient quota
 
-**Issue: PDF not displaying**
-- Ensure the file was uploaded successfully
-- Check browser console for errors
-- Verify the file path exists in the uploads directory
-
-## License
-
-MIT
+**Issue: Q&A not working**
+- Verify Azure OpenAI credentials
+- Ensure your deployment name is correct
+- Check that you've uploaded a document first
 
 ## Support
 
 For issues or questions, please check the Azure documentation:
-
 - [Azure AI Document Intelligence](https://learn.microsoft.com/azure/ai-services/document-intelligence/)
 - [Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/)
 
 ---
 
-⚠️ **DISCLAIMER**
+## ⚠️ DISCLAIMER
 
 This application is a prototype intended for proof of concept and demonstration purposes only. It is not designed, tested, or supported for production use. Use at your own risk. Microsoft makes no warranties, express or implied, regarding the functionality, reliability, or suitability of this code for any purpose. For production scenarios, please consult official Microsoft documentation and implement appropriate security, scalability, and compliance measures.

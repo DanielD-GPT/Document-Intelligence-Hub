@@ -9,7 +9,7 @@
 <body>
     <!-- Header -->
     <header class="app-header">
-        <h1>Azure Document Intelligence</h1>
+        <h1>Azure Document Intelligence Hub</h1>
     </header>
 
     <div class="app-container">
@@ -63,59 +63,78 @@
                 </div>
             </div>
 
-            <!-- Content Analysis Output Window -->
-            <div class="window transcription-window">
+            <!-- Excel Workbook Template Window -->
+            <div class="window excel-window">
                 <div class="window-header">
-                    <h2>Content Analysis Output</h2>
-                    <div class="transcription-controls">
-                        <div class="search-navigation" id="searchNavigation" style="display: none;">
-                            <button class="nav-btn" id="prevSearchBtn" onclick="scrollToPrevHighlight()" title="Previous match">⬆️</button>
-                            <button class="nav-btn" id="nextSearchBtn" onclick="scrollToNextHighlight()" title="Next match">⬇️</button>
-                            <span class="search-counter" id="searchCounter"></span>
-                        </div>
-                        <button class="copy-btn" id="copyBtn" onclick="copyTranscription()">📋 Copy</button>
-                        <button class="download-btn" id="downloadBtn" onclick="downloadTranscription()">💾 Download</button>
+                    <h2>Excel Workbook</h2>
+                    <div class="excel-controls">
+                        <button class="download-btn" id="exportTablesBtn" onclick="exportTablesToExcel()" disabled>📋 Export Tables</button>
+                        <button class="download-btn" id="exportSingleTabBtn" onclick="exportSingleTab()" disabled>📄 Single Tab Export</button>
+                        <button class="download-btn" id="fillExcelBtn" onclick="fillExcelWorkbook()" disabled>🧩 Fill Workbook</button>
                     </div>
                 </div>
                 <div class="window-content">
-                    <div class="transcription-container">
-                        <div class="transcription-placeholder" id="transcriptionPlaceholder">
-                            <p>Upload a PDF file to see the extracted content here</p>
+                    <div class="excel-container">
+                        <div class="drop-zone excel-drop-zone" id="excelDropZone">
+                            <div class="drop-zone-content">
+                                <i class="upload-icon">📊</i>
+                                <p>Drag & drop an Excel workbook (.xlsx)</p>
+                                <p>or</p>
+                                <button class="browse-btn" onclick="document.getElementById('excelFileInput').click()">Browse Workbook</button>
+                                <input type="file" id="excelFileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display: none;">
+                            </div>
                         </div>
-                        <div 
-                            class="transcription-text" 
-                            id="transcriptionText" 
-                            style="display: none;"
-                        ></div>
+
+                        <div class="excel-status" id="excelStatus">
+                            <div class="excel-status-row">
+                                <span class="excel-status-label">Template:</span>
+                                <span class="excel-status-value" id="excelTemplateName">None</span>
+                            </div>
+                            <div class="excel-status-row">
+                                <span class="excel-status-label">Selected PDF:</span>
+                                <span class="excel-status-value" id="excelSelectedPdf">None</span>
+                            </div>                            <div class="excel-progress" id="excelProgress" style="display: none;">
+                                <div class="excel-progress-bar">
+                                    <div class="excel-progress-fill" id="excelProgressFill"></div>
+                                </div>
+                                <div class="excel-progress-text" id="excelProgressText">Processing: 0 of 0 complete</div>
+                            </div>                            <div class="excel-hint" id="excelHint">
+                                Upload a workbook, then click a PDF in the list, then press “Fill Workbook”.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Section: PDF Viewer -->
+        <!-- Right Section: Chat with Your Data -->
         <div class="right-section">
-            <div class="window pdf-window">
+            <div class="window chat-window chat-window--full">
                 <div class="window-header">
-                    <h2>PDF Viewer</h2>
-                    <div class="pdf-controls">
-                        <select id="fileSelect" class="file-select">
-                            <option value="">Select a PDF file...</option>
-                        </select>
+                    <h2>💬 Chat with Your Data</h2>
+                    <div class="chat-controls">
+                        <button class="clear-btn" id="clearChatBtn" onclick="clearChat()">🗑️ Clear</button>
                     </div>
                 </div>
                 <div class="window-content">
-                    <div class="pdf-container">
-                        <!-- PDF Viewer Section -->
-                        <div class="pdf-viewer-section" id="pdfViewerSection">
-                            <div class="pdf-viewer-container">
-                                <div class="pdf-placeholder" id="pdfPlaceholder">
-                                    <div class="placeholder-content">
-                                        <i class="pdf-icon">📄</i>
-                                        <p>Select a PDF file from the dropdown above to view it here</p>
-                                    </div>
-                                </div>
-                                <iframe id="pdfViewer" src="" frameborder="0" style="display: none; width: 100%; height: 100%;"></iframe>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-placeholder" id="chatPlaceholder">
+                                <p>💡 Select a PDF from the list and ask questions about its content</p>
+                                <p class="chat-hint">Example: "What is the main topic?" or "Summarize the key points"</p>
                             </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <input 
+                                type="text" 
+                                id="chatInput" 
+                                class="chat-input" 
+                                placeholder="Ask a question about the selected PDF..."
+                                disabled
+                            />
+                            <button id="sendChatBtn" class="send-btn" onclick="sendMessage()" disabled>
+                                <span class="send-icon">➤</span>
+                            </button>
                         </div>
                     </div>
                 </div>

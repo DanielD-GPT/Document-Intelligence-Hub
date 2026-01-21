@@ -75,7 +75,7 @@ body {
     overflow: hidden; /* Prevent overflow */
 }
 
-/* Right Section - PDF Viewer Window (Reduced by 20%) */
+/* Right Section - Content Analysis Output */
 .right-section {
     display: flex;
     flex: 1; /* Take remaining space after left section */
@@ -84,6 +84,18 @@ body {
     height: 100%; /* Ensure full height to match left section */
     max-height: calc((100vh - 140px) * 0.95); /* Reduced by 5% */
     overflow: hidden; /* Prevent overflow */
+}
+
+.transcription-window--full {
+    height: 100%;
+    width: 100%;
+    flex: 1;
+}
+
+.chat-window--full {
+    height: 100%;
+    width: 100%;
+    flex: 1;
 }
 
 /* Window Styles */
@@ -124,8 +136,98 @@ body {
 
 /* Upload Window */
 .upload-window {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+.excel-window {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+.excel-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.excel-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+}
+
+.excel-drop-zone {
     flex: 1;
-    /* Removed max-height to allow full expansion and align with PDF viewer */
+    min-height: 160px;
+    padding: 14px;
+}
+
+.excel-status {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.excel-status-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.excel-status-label {
+    color: #6c757d;
+    width: 90px;
+    flex: 0 0 90px;
+}
+
+.excel-status-value {
+    color: #212529;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.excel-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6c757d;
+    line-height: 1.3;
+}
+
+.excel-progress {
+    margin-top: 8px;
+    padding: 8px;
+    background: #f0f8ff;
+    border-radius: 4px;
+}
+
+.excel-progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.excel-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #45a049);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.excel-progress-text {
+    font-size: 0.85rem;
+    color: #333;
+    font-weight: 500;
+    text-align: center;
 }
 
 /* Upload Container Layout */
@@ -470,7 +572,7 @@ body {
 /* Transcription Window */
 .transcription-window {
     flex: 1;
-    /* Removed max-height to allow full expansion and align with PDF viewer */
+    /* Removed max-height to allow full expansion */
 }
 
 .transcription-controls {
@@ -839,6 +941,7 @@ body {
     }
     
     .upload-window,
+    .excel-window,
     .transcription-window {
         max-height: none;
         min-height: 250px;
@@ -898,82 +1001,220 @@ body {
     border-radius: 4px;
 }
 
-.chat-messages::-webkit-scrollbar-thumb:hover,
-.transcription-text::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
-}
-
-/* PDF Viewer Styles */
-.pdf-window {
-    height: 100%;
-    width: 100%; /* Ensure full width usage */
-    flex: 1; /* Take all available space */
-}
-
-.pdf-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.pdf-container {
-    height: 100%;
-    width: 100%; /* Ensure full width usage */
+/* Chat Interface Styles */
+.chat-window {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
-.pdf-viewer-section {
-    width: 100%;
-    height: 100%;
+.chat-container {
     display: flex;
     flex-direction: column;
-    flex: 1; /* Ensure it takes all available space */
+    height: 100%;
+    max-height: 100%;
 }
 
-.pdf-viewer-container {
+.chat-messages {
     flex: 1;
-    width: 100%; /* Ensure full width usage */
-    padding: 15px;
-    background: white;
-    border-radius: 6px;
-    min-height: 380px; /* Reduced by 5% from 400px */
-    max-height: calc((100vh - 200px) * 0.95); /* Reduced by 5% */
-    position: relative;
-    box-sizing: border-box; /* Include padding in width calculation */
+    overflow-y: auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    min-height: 300px;
+    max-height: calc(100vh - 350px);
 }
 
-.pdf-placeholder {
+.chat-placeholder {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100%;
-    min-height: 333px; /* Reduced by 5% from 350px */
-    background: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    border-radius: 8px;
-}
-
-.placeholder-content {
+    color: #999;
     text-align: center;
-    color: #6c757d;
 }
 
-.pdf-icon {
-    font-size: 48px;
-    display: block;
-    margin-bottom: 15px;
-}
-
-.placeholder-content p {
+.chat-placeholder p {
+    margin: 8px 0;
     font-size: 16px;
-    margin: 0;
 }
 
-.pdf-viewer-container iframe {
-    width: 100%;
-    height: 100%;
-    border: 1px solid #dee2e6;
+.chat-hint {
+    font-size: 14px !important;
+    color: #aaa !important;
+}
+
+.chat-message {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-message--user {
+    flex-direction: row-reverse;
+}
+
+.chat-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.chat-message--user .chat-avatar {
+    background: #007bff;
+}
+
+.chat-message--assistant .chat-avatar {
+    background: #6c757d;
+}
+
+.chat-content {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.chat-message--user .chat-content {
+    background: #007bff;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-message--assistant .chat-content {
+    background: white;
+    color: #333;
+    border: 1px solid #e0e0e0;
+    border-bottom-left-radius: 4px;
+}
+
+.chat-message.typing .chat-content {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.chat-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.chat-input:focus {
+    border-color: #007bff;
+}
+
+.chat-input:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.send-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: background 0.3s;
+}
+
+.send-btn:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+.send-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.send-icon {
+    display: inline-block;
+    transform: translateX(1px);
+}
+
+.chat-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.clear-btn {
+    padding: 8px 16px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.clear-btn:hover {
+    background: #c82333;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.transcription-text::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
 }

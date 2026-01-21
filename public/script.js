@@ -4,6 +4,9 @@ let uploadedFiles = {};
 let uploadQueue = [];
 let isUploading = false;
 
+let currentExcelId = null;
+let currentExcelFilename = null;
+
 // DOM elements
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -11,10 +14,18 @@ const uploadProgress = document.getElementById('uploadProgress');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
 const fileList = document.getElementById('fileList');
-const transcriptionPlaceholder = document.getElementById('transcriptionPlaceholder');
-const transcriptionText = document.getElementById('transcriptionText');
-const fileSelect = document.getElementById('fileSelect');
+const chatMessages = document.getElementById('chatMessages');
+const chatPlaceholder = document.getElementById('chatPlaceholder');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChatBtn');
 const loadingOverlay = document.getElementById('loadingOverlay');
+
+// Excel elements
+const excelDropZone = document.getElementById('excelDropZone');
+const excelFileInput = document.getElementById('excelFileInput');
+const excelTemplateName = document.getElementById('excelTemplateName');
+const excelSelectedPdf = document.getElementById('excelSelectedPdf');
+const fillExcelBtn = document.getElementById('fillExcelBtn');
 
 // File search input
 const fileSearchInput = document.getElementById('fileSearchInput');
@@ -36,8 +47,30 @@ function setupEventListeners() {
     // File input change
     fileInput.addEventListener('change', handleFileSelect);
 
-    // File selection for PDF viewer
-    fileSelect.addEventListener('change', handleFileSelectForPDF);
+    // Excel drag/drop + browse
+    if (excelDropZone && excelFileInput) {
+        excelDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            excelDropZone.classList.add('dragover');
+        });
+        excelDropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            excelDropZone.classList.remove('dragover');
+        });
+        excelDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            excelDropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                handleExcelFile(files[0]);
+            }
+        });
+        excelDropZone.addEventListener('click', () => excelFileInput.click());
+        excelFileInput.addEventListener('change', (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (f) handleExcelFile(f);
+        });
+    }
     
     // Search input for clear button toggle and real-time search
     if (fileSearchInput) {
@@ -45,6 +78,16 @@ function setupEventListeners() {
         console.log('Search input event listener added');
     } else {
         console.error('fileSearchInput element not found');
+    }
+
+    // Chat input - send on Enter key
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !sendChatBtn.disabled) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
     }
 }
 
@@ -220,119 +263,17 @@ function handleUploadSuccess(response) {
     // Update content data for searching
     updateFileTranscriptionData(fileId, content);
     
-    // Add to chat file selector
-    addFileToSelector(fileId, filename);
+    // No dropdown selector to update
     
     // Show content
     showTranscription(content);
     
     // Set as current file
     currentFileId = fileId;
-    fileSelect.value = fileId;
-    
-    // Automatically show the PDF viewer for the uploaded file
-    showPDFViewer(fileId, filename);
+
+    setExcelStatus();
 
     showSuccess('File uploaded and analyzed successfully!');
-}
-
-// PDF file selection handler
-function handleFileSelectForPDF() {
-    console.log('handleFileSelectForPDF called');
-    const selectedFileId = fileSelect.value;
-    console.log('Selected file ID:', selectedFileId);
-    console.log('Available files:', Object.keys(uploadedFiles));
-    
-    if (selectedFileId && uploadedFiles[selectedFileId]) {
-        currentFileId = selectedFileId;
-        
-        // Get current search term for highlighting
-        const searchTerm = fileSearchInput ? fileSearchInput.value.trim() : '';
-        
-        console.log('Showing PDF for file:', selectedFileId);
-        // Show PDF viewer with search highlighting
-        showPDFViewer(selectedFileId, uploadedFiles[selectedFileId].filename, searchTerm);
-        
-        // Show content analysis with search highlighting
-        showTranscription(uploadedFiles[selectedFileId].content, searchTerm);
-    } else {
-        console.log('No valid file selected, hiding PDF viewer');
-        currentFileId = null;
-        hidePDFViewer();
-    }
-}
-
-// PDF Viewer Functions
-function showPDFViewer(fileId, filename, searchTerm = '') {
-    console.log('showPDFViewer called with:', { fileId, filename, searchTerm });
-    
-    const pdfViewer = document.getElementById('pdfViewer');
-    const pdfPlaceholder = document.getElementById('pdfPlaceholder');
-    
-    if (!pdfViewer) {
-        console.error('PDF viewer element not found');
-        return;
-    }
-    
-    if (!pdfPlaceholder) {
-        console.error('PDF placeholder element not found');
-        return;
-    }
-    
-    // Build PDF URL with search parameter if provided
-    let pdfUrl = `/pdf/${fileId}`;
-    if (searchTerm) {
-        pdfUrl += `#search=${encodeURIComponent(searchTerm)}`;
-    }
-    
-    console.log('Loading PDF from URL:', pdfUrl);
-    
-    // Set PDF source and show viewer
-    pdfViewer.src = pdfUrl;
-    pdfViewer.style.display = 'block';
-    pdfPlaceholder.style.display = 'none';
-    
-    // Add error handling for PDF loading
-    pdfViewer.onerror = function() {
-        console.error('Failed to load PDF from:', pdfUrl);
-        showError('Failed to load PDF file');
-        hidePDFViewer();
-    };
-    
-    pdfViewer.onload = function() {
-        console.log('PDF loaded successfully');
-    };
-    
-    // If there's a search term, also try to use PDF.js search API
-    if (searchTerm && pdfViewer.contentWindow) {
-        pdfViewer.onload = function() {
-            try {
-                // Try to access PDF.js search functionality
-                const pdfWindow = pdfViewer.contentWindow;
-                if (pdfWindow && pdfWindow.PDFViewerApplication) {
-                    setTimeout(() => {
-                        pdfWindow.PDFViewerApplication.findController.executeCommand('find', {
-                            query: searchTerm,
-                            highlightAll: true,
-                            caseSensitive: false
-                        });
-                    }, 1000); // Wait for PDF to fully load
-                }
-            } catch (e) {
-                console.log('PDF.js search not available, using URL fragment:', e);
-            }
-        };
-    }
-}
-
-function hidePDFViewer() {
-    const pdfViewer = document.getElementById('pdfViewer');
-    const pdfPlaceholder = document.getElementById('pdfPlaceholder');
-    
-    // Hide PDF viewer and show placeholder
-    pdfViewer.src = '';
-    pdfViewer.style.display = 'none';
-    pdfPlaceholder.style.display = 'flex';
 }
 
 // Load existing transcriptions
@@ -352,7 +293,6 @@ async function loadExistingTranscriptions() {
             addFileToList(fileId, data.filename, data.hasPdfContent || false);
             // Update content data for searching
             updateFileTranscriptionData(fileId, data.content);
-            addFileToSelector(fileId, data.filename);
         });
         
     } catch (error) {
@@ -406,6 +346,25 @@ function addFileToList(fileId, filename, hasPdfContent = false) {
     const fileList = document.getElementById('fileList');
     if (!fileList) return;
     
+    // Check if file already exists in the list
+    const existingItem = fileList.querySelector(`[data-file-id="${fileId}"]`);
+    if (existingItem) {
+        // Update existing item instead of adding duplicate
+        existingItem.setAttribute('data-filename', filename.toLowerCase());
+        existingItem.innerHTML = `
+            <div class="file-info" onclick="selectFile('${fileId}')" style="cursor: pointer;">
+                <div class="file-name-container">
+                    <span class="file-name">${filename}</span>
+                    <button class="delete-btn inline-delete-btn" onclick="event.stopPropagation(); deleteFile('${fileId}')" title="Delete file">× Delete</button>
+                </div>
+            </div>
+            <div class="file-actions">
+                ${hasPdfContent ? '<button class="download-pdf-btn" onclick="downloadPDF(\'' + fileId + '\')" title="Download from Cloud">📥</button>' : ''}
+            </div>
+        `;
+        return;
+    }
+    
     const fileItem = document.createElement('div');
     fileItem.className = 'file-item';
     fileItem.setAttribute('data-filename', filename.toLowerCase());
@@ -424,16 +383,6 @@ function addFileToList(fileId, filename, hasPdfContent = false) {
     `;
     
     fileList.appendChild(fileItem);
-}
-
-function addFileToSelector(fileId, filename) {
-    const fileSelect = document.getElementById('fileSelect');
-    if (!fileSelect) return;
-    
-    const option = document.createElement('option');
-    option.value = fileId;
-    option.textContent = filename;
-    fileSelect.appendChild(option);
 }
 
 function updateFileTranscriptionData(fileId, content) {
@@ -477,11 +426,22 @@ function escapeRegExp(string) {
 }
 
 function selectFile(fileId) {
-    const fileSelect = document.getElementById('fileSelect');
-    if (fileSelect) {
-        fileSelect.value = fileId;
-        fileSelect.dispatchEvent(new Event('change'));
+    if (!fileId || !uploadedFiles[fileId]) return;
+    currentFileId = fileId;
+
+    // Enable chat input when a file is selected
+    if (chatInput && sendChatBtn) {
+        chatInput.disabled = false;
+        sendChatBtn.disabled = false;
+        chatInput.placeholder = `Ask a question about ${uploadedFiles[fileId].filename}...`;
     }
+
+    // Hide placeholder, show empty chat ready state
+    if (chatPlaceholder) {
+        chatPlaceholder.style.display = 'none';
+    }
+
+    setExcelStatus();
 }
 
 function downloadPDF(fileId) {
@@ -530,26 +490,20 @@ async function deleteFile(fileId) {
                     fileItem.remove();
                 }
                 
-                // Remove from file selector dropdown
-                const fileOption = document.querySelector(`#fileSelect option[value="${fileId}"]`);
-                if (fileOption) {
-                    fileOption.remove();
-                }
-                
                 // Clear current selection if this was the selected file
                 if (currentFileId === fileId) {
                     currentFileId = null;
-                    hidePDFViewer();
-                    const transcriptionText = document.getElementById('transcriptionText');
-                    const transcriptionPlaceholder = document.getElementById('transcriptionPlaceholder');
-                    if (transcriptionText) transcriptionText.style.display = 'none';
-                    if (transcriptionPlaceholder) transcriptionPlaceholder.style.display = 'block';
                     
-                    // Reset file selector to default
-                    const fileSelect = document.getElementById('fileSelect');
-                    if (fileSelect) {
-                        fileSelect.value = '';
+                    // Reset chat interface
+                    if (chatPlaceholder) chatPlaceholder.style.display = 'block';
+                    if (chatInput) {
+                        chatInput.disabled = true;
+                        chatInput.placeholder = 'Ask a question about the selected PDF...';
                     }
+                    if (sendChatBtn) sendChatBtn.disabled = true;
+                    clearChat();
+
+                    setExcelStatus();
                 }
                 
                 // Clear any search results if this file was being searched
@@ -586,10 +540,6 @@ function handleSearchInput() {
         // Perform search in content analysis output
         if (currentFileId && uploadedFiles[currentFileId] && uploadedFiles[currentFileId].content) {
             showTranscription(uploadedFiles[currentFileId].content, searchValue);
-            // Also update PDF viewer with search highlighting
-            if (searchValue) {
-                showPDFViewer(currentFileId, uploadedFiles[currentFileId].filename, searchValue);
-            }
         }
         
         // Filter file list based on search
@@ -612,8 +562,6 @@ function clearSearch() {
     // Clear search results
     if (currentFileId && uploadedFiles[currentFileId] && uploadedFiles[currentFileId].content) {
         showTranscription(uploadedFiles[currentFileId].content, '');
-        // Also refresh PDF viewer without search highlighting
-        showPDFViewer(currentFileId, uploadedFiles[currentFileId].filename);
     }
     
     // Reset file list
@@ -774,5 +722,306 @@ function downloadTranscription() {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+    }
+}
+
+function setExcelStatus() {
+    if (excelTemplateName) {
+        excelTemplateName.textContent = currentExcelFilename || 'None';
+    }
+    if (excelSelectedPdf) {
+        const pdfName = currentFileId && uploadedFiles[currentFileId]?.filename
+            ? uploadedFiles[currentFileId].filename
+            : 'None';
+        excelSelectedPdf.textContent = pdfName;
+    }
+    if (fillExcelBtn) {
+        fillExcelBtn.disabled = !(currentExcelId && currentFileId);
+    }
+    const exportTablesBtn = document.getElementById('exportTablesBtn');
+    if (exportTablesBtn) {
+        exportTablesBtn.disabled = !currentFileId;
+    }
+    const exportSingleTabBtn = document.getElementById('exportSingleTabBtn');
+    if (exportSingleTabBtn) {
+        exportSingleTabBtn.disabled = !currentFileId;
+    }
+}
+
+function validateExcelFile(file) {
+    const maxSize = 25 * 1024 * 1024;
+    const isXlsx = file && file.name && file.name.toLowerCase().endsWith('.xlsx');
+    if (!isXlsx) {
+        showError('Please select only .xlsx files');
+        return false;
+    }
+    if (file.size > maxSize) {
+        showError('Excel file size must be less than 25MB');
+        return false;
+    }
+    return true;
+}
+
+async function handleExcelFile(file) {
+    if (!validateExcelFile(file)) return;
+
+    try {
+        showLoading(true, `Uploading ${file.name}...`);
+
+        const formData = new FormData();
+        formData.append('excelFile', file);
+
+        const res = await fetch('/upload-excel', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.error || 'Excel upload failed');
+        }
+
+        currentExcelId = data.excelId;
+        currentExcelFilename = data.filename;
+        setExcelStatus();
+        showSuccess('Excel workbook uploaded successfully!');
+    } catch (e) {
+        console.error('Excel upload failed:', e);
+        showError('Excel upload failed: ' + e.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function exportTablesToExcel() {
+    if (!currentFileId) {
+        showError('Select an uploaded PDF first');
+        return;
+    }
+
+    try {
+        showLoading(true, 'Exporting tables to Excel...');
+
+        const res = await fetch('/export-tables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileId: currentFileId })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+            throw new Error(data.error || 'Failed to export tables');
+        }
+
+        showLoading(false);
+        showSuccess(`Exported ${data.tableCount} table(s) to Excel`);
+
+        // Trigger download
+        const downloadUrl = `/download-filled-excel/${data.exportId}`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+    } catch (error) {
+        console.error('Export tables error:', error);
+        showLoading(false);
+        showError('Failed to export tables: ' + error.message);
+    }
+}
+
+async function exportSingleTab() {
+    if (!currentFileId) {
+        showError('Select an uploaded PDF first');
+        return;
+    }
+
+    try {
+        showLoading(true, 'Exporting tables to single tab...');
+
+        const res = await fetch('/export-single-tab', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileId: currentFileId })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+            throw new Error(data.error || 'Failed to export tables');
+        }
+
+        showLoading(false);
+        showSuccess(`Exported ${data.tableCount} table(s) to single worksheet`);
+
+        // Trigger download
+        const downloadUrl = `/download-filled-excel/${data.exportId}`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+    } catch (error) {
+        console.error('Export single tab error:', error);
+        showLoading(false);
+        showError('Failed to export tables: ' + error.message);
+    }
+}
+
+async function fillExcelWorkbook() {
+    if (!currentExcelId) {
+        showError('Upload an Excel workbook first');
+        return;
+    }
+    if (!currentFileId) {
+        showError('Select an uploaded PDF first');
+        return;
+    }
+
+    try {
+        showLoading(true, 'Starting workbook fill...');
+
+        const res = await fetch('/fill-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ excelId: currentExcelId, fileId: currentFileId })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.error || 'Failed to start fill workbook');
+        }
+
+        const { jobId, total } = data;
+        
+        // Poll for progress
+        const pollInterval = setInterval(async () => {
+            try {
+                const progressRes = await fetch(`/fill-excel-progress/${jobId}`);
+                const progress = await progressRes.json();
+                
+                if (progress.status === 'processing') {
+                    showLoading(true, `Processing: ${progress.current} of ${progress.total} complete...`);
+                } else if (progress.status === 'complete') {
+                    clearInterval(pollInterval);
+                    showLoading(false);
+                    
+                    const link = document.createElement('a');
+                    link.href = progress.result.downloadUrl;
+                    link.download = progress.result.filename || 'filled.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showSuccess('Generated filled workbook. Download should start automatically.');
+                } else if (progress.status === 'error') {
+                    clearInterval(pollInterval);
+                    showLoading(false);
+                    throw new Error(progress.error || 'Fill workbook failed');
+                }
+            } catch (pollError) {
+                clearInterval(pollInterval);
+                showLoading(false);
+                console.error('Progress poll error:', pollError);
+                showError('Progress tracking failed: ' + pollError.message);
+            }
+        }, 500); // Poll every 500ms
+        
+    } catch (e) {
+        console.error('Fill workbook failed:', e);
+        showError('Fill workbook failed: ' + e.message);
+        showLoading(false);
+    }
+}
+
+// ========== Chat Functions ==========
+
+async function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message || !currentFileId) return;
+
+    try {
+        // Add user message to chat
+        addChatMessage(message, 'user');
+        chatInput.value = '';
+        chatInput.disabled = true;
+        sendChatBtn.disabled = true;
+
+        // Show typing indicator
+        const typingId = addChatMessage('Thinking...', 'assistant', true);
+
+        // Send to backend
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: message,
+                fileId: currentFileId 
+            })
+        });
+
+        const data = await response.json();
+        
+        // Remove typing indicator
+        const typingMsg = document.getElementById(typingId);
+        if (typingMsg) typingMsg.remove();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Chat request failed');
+        }
+
+        // Add assistant response
+        addChatMessage(data.response, 'assistant');
+
+    } catch (error) {
+        console.error('Chat error:', error);
+        showError('Chat failed: ' + error.message);
+        
+        // Remove typing indicator on error
+        const typingMsg = document.querySelector('.chat-message.typing');
+        if (typingMsg) typingMsg.remove();
+    } finally {
+        chatInput.disabled = false;
+        sendChatBtn.disabled = false;
+        chatInput.focus();
+    }
+}
+
+function addChatMessage(content, role, isTyping = false) {
+    const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message chat-message--${role}${isTyping ? ' typing' : ''}`;
+    messageDiv.id = messageId;
+    
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'chat-avatar';
+    avatarDiv.textContent = role === 'user' ? '👤' : '🤖';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'chat-content';
+    contentDiv.textContent = content;
+    
+    messageDiv.appendChild(avatarDiv);
+    messageDiv.appendChild(contentDiv);
+    
+    chatMessages.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    return messageId;
+}
+
+function clearChat() {
+    if (!chatMessages) return;
+    
+    // Remove all messages except placeholder
+    const messages = chatMessages.querySelectorAll('.chat-message');
+    messages.forEach(msg => msg.remove());
+    
+    // Show placeholder if no file selected
+    if (!currentFileId && chatPlaceholder) {
+        chatPlaceholder.style.display = 'block';
     }
 }

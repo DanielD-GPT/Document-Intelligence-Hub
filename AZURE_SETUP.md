@@ -17,6 +17,7 @@ This document provides step-by-step instructions for setting up the required Azu
 
 **Environment Variables**:
 ```env
+# Endpoint must be a full base URL (include https://) and should end with a trailing slash (/)
 AZURE_CONTENT_UNDERSTANDING_ENDPOINT=https://your-resource-name.cognitiveservices.azure.com/
 AZURE_CONTENT_UNDERSTANDING_KEY=your-32-character-key-here
 ```
@@ -37,12 +38,17 @@ AZURE_CONTENT_UNDERSTANDING_KEY=your-32-character-key-here
 
 **Environment Variables**:
 ```env
-# For Whisper (transcription)
+# For GPT (chat + Excel workbook filling)
+AZURE_OPENAI_ENDPOINT=https://your-openai-resource.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-openai-key-here
+AZURE_OPENAI_DEPLOYMENT=your-gpt-deployment-name
+# Optional override
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+
+# Legacy variable names (still supported)
 REACT_APP_AZURE_OPENAI_ENDPOINT=https://your-openai-resource.openai.azure.com/
 REACT_APP_AZURE_OPENAI_KEY=your-openai-key-here
 REACT_APP_AZURE_OPENAI_DEPLOYMENT_NAME=your-whisper-deployment-name
-
-# For GPT (chat)
 REACT_APP_AZURE_OPENAI_CHAT_ENDPOINT=https://your-openai-resource.openai.azure.com/
 REACT_APP_AZURE_OPENAI_CHAT_KEY=your-openai-key-here
 ```
