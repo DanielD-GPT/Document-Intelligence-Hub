@@ -2,6 +2,12 @@
 
 A modern web application for analyzing documents using Azure AI Document Intelligence (Content Understanding) and Azure OpenAI. Features a three-pane UI with document viewing, content extraction, and intelligent Q&A capabilities.
 
+## ⚠️ Important: Flask Migration
+
+**This application has been refactored to use Flask (Python) instead of Node.js/Express.**
+
+For detailed Flask setup instructions, see **[FLASK_SETUP.md](FLASK_SETUP.md)**
+
 ## Features
 
 📄 **PDF Document Upload**: Upload contract documents for analysis  
@@ -20,14 +26,14 @@ A modern web application for analyzing documents using Azure AI Document Intelli
 ## Architecture
 
 - **Frontend**: HTML, CSS, Vanilla JavaScript
-- **Backend**: Node.js with Express
+- **Backend**: Python with Flask (migrated from Node.js/Express)
 - **Azure Services**:
-  - Azure AI Document Intelligence (prebuilt-read model)
+  - Azure AI Document Intelligence (prebuilt-layout model)
   - Azure OpenAI for LLM integration
 
 ## Prerequisites
 
-- Node.js 16+ and npm
+- Python 3.8+ and pip
 - Azure subscription with:
   - Azure AI Document Intelligence resource
   - Azure OpenAI resource with a deployed model
@@ -41,10 +47,28 @@ git clone https://github.com/DanielD-GPT/Document-Intelligence-Hub.git
 cd Document-Intelligence-Hub
 ```
 
+## Quick Start (Flask)
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/DanielD-GPT/Document-Intelligence-Hub.git
+cd Document-Intelligence-Hub
+```
+
 ### 2. Install Dependencies
 
 ```bash
-npm install
+# Create virtual environment (recommended)
+python -m venv venv
+
+# Activate virtual environment
+venv\Scripts\activate  # Windows
+# or
+source venv/bin/activate  # Linux/Mac
+
+# Install Python packages
+pip install -r requirements.txt
 ```
 
 ### 3. Configure Azure Credentials
@@ -52,7 +76,9 @@ npm install
 Create a `.env` file in the root directory by copying `.env.example`:
 
 ```bash
-copy .env.example .env
+copy .env.example .env  # Windows
+# or
+cp .env.example .env  # Linux/Mac
 ```
 
 Edit `.env` and add your Azure credentials:
@@ -64,7 +90,7 @@ AZURE_CONTENT_UNDERSTANDING_KEY=your_azure_document_intelligence_key_here
 
 # Azure OpenAI Configuration (required for chat + Excel workbook filling)
 AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint_here
-AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
 AZURE_OPENAI_DEPLOYMENT=your_deployment_name_here
 AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
 
@@ -91,7 +117,7 @@ PORT=8080
 ### 4. Run the Application
 
 ```bash
-npm start
+python app.py
 ```
 
 The server will start on `http://localhost:8080`
