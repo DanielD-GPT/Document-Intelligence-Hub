@@ -69,6 +69,8 @@ function setupEventListeners() {
         excelFileInput.addEventListener('change', (e) => {
             const f = e.target.files && e.target.files[0];
             if (f) handleExcelFile(f);
+            // Clear the input so the same file can be selected again
+            e.target.value = '';
         });
     }
     
@@ -118,6 +120,8 @@ function handleFileSelect(e) {
     if (files.length > 0) {
         handleFiles(files);
     }
+    // Clear the input so the same file can be selected again
+    e.target.value = '';
 }
 
 // Handle multiple files
